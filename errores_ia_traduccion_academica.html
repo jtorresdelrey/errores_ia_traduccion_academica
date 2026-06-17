@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Errores de IA en traducción académica — Ejemplos anotados</title>
+  <style>
+    /* ── Tipografía y reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary:    #ffffff;
+      --bg-secondary:  #f5f4f0;
+      --bg-tertiary:   #eeede8;
+      --text-primary:  #1a1a18;
+      --text-secondary:#5a5a56;
+      --text-tertiary: #9a9993;
+      --border:        rgba(0,0,0,0.12);
+      --border-md:     rgba(0,0,0,0.22);
+      --radius-md:     8px;
+      --radius-lg:     12px;
+      /* semánticos */
+      --bg-info:       #e6f1fb;
+      --text-info:     #0c447c;
+      --bg-success:    #eaf3de;
+      --text-success:  #27500a;
+      --bg-danger:     #fcebeb;
+      --text-danger:   #791f1f;
+      --bg-warn:       #faeeda;
+      --text-warn:     #633806;
+      /* ramps */
+      --purple-50:#EEEDFE; --purple-800:#3C3489;
+      --blue-50:#E6F1FB;   --blue-800:#0C447C;
+      --coral-50:#FAECE7;  --coral-800:#712B13; --coral-600:#993C1D;
+      --amber-50:#FAEEDA;  --amber-800:#633806; --amber-600:#854F0B;
+      --teal-50:#E1F5EE;   --teal-800:#085041;  --teal-600:#0F6E56;
+      --pink-50:#FBEAF0;   --pink-800:#72243E;  --pink-600:#993556;
+      --green-50:#EAF3DE;  --green-800:#27500A;
+      --gray-50:#F1EFE8;   --gray-800:#444441;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary:    #1e1e1c;
+        --bg-secondary:  #2a2a28;
+        --bg-tertiary:   #323230;
+        --text-primary:  #e8e6df;
+        --text-secondary:#b0ae a6;
+        --text-tertiary: #78766e;
+        --border:        rgba(255,255,255,0.10);
+        --border-md:     rgba(255,255,255,0.18);
+        --bg-info:       #0c2a45; --text-info:#85b7eb;
+        --bg-success:    #162808; --text-success:#c0dd97;
+        --bg-danger:     #2d1010; --text-danger:#f09595;
+        --bg-warn:       #2d1e08; --text-warn:#fac775;
+        --purple-50:#26215C; --purple-800:#CECBF6;
+        --blue-50:#042C53;   --blue-800:#B5D4F4;
+        --coral-50:#4A1B0C;  --coral-800:#F5C4B3; --coral-600:#F0997B;
+        --amber-50:#412402;  --amber-800:#FAC775; --amber-600:#EF9F27;
+        --teal-50:#04342C;   --teal-800:#9FE1CB;  --teal-600:#5DCAA5;
+        --pink-50:#4B1528;   --pink-800:#F4C0D1;  --pink-600:#ED93B1;
+        --green-50:#173404;  --green-800:#C0DD97;
+        --gray-50:#2C2C2A;   --gray-800:#D3D1C7;
+      }
+    }
+
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 16px;
+      line-height: 1.7;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      padding: 2rem 1rem;
+    }
+
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    /* ── Cabecera ── */
+    .page-header {
+      margin-bottom: 2rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 0.5px solid var(--border-md);
+    }
+    .page-header h1 {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: .4rem;
+    }
+    .page-header p {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: .75rem;
+    }
+
+    /* ── Tarjetas ── */
+    .card {
+      background: var(--bg-primary);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Badges ── */
+    .badge {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 99px;
+      display: inline-block;
+    }
+    .badge-es  { background: var(--purple-50); color: var(--purple-800); }
+    .badge-en  { background: var(--blue-50);   color: var(--blue-800); }
+    .badge-fr  { background: var(--pink-50);   color: var(--pink-800); }
+    .badge-de  { background: var(--amber-50);  color: var(--amber-800); }
+    .badge-ja  { background: var(--teal-50);   color: var(--teal-800); }
+    .badge-err { background: var(--coral-50);  color: var(--coral-800); }
+    .badge-ok  { background: var(--green-50);  color: var(--green-800); }
+
+    /* ── Etiqueta sección ── */
+    .section-label {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin: 1rem 0 .5rem;
+    }
+
+    /* ── Bloque de texto ── */
+    .text-block {
+      font-size: 14px;
+      line-height: 1.9;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      color: var(--text-primary);
+    }
+    .text-block.mono {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 13px;
+    }
+
+    /* ── Errores subrayados ── */
+    .err {
+      border-bottom: 2px solid;
+      padding-bottom: 1px;
+    }
+    .err-1 { border-color: #D85A30; background: #FAECE7; }
+    .err-2 { border-color: #BA7517; background: #FAEEDA; }
+    .err-3 { border-color: #534AB7; background: #EEEDFE; }
+    .err-4 { border-color: #1D9E75; background: #E1F5EE; }
+    .err-5 { border-color: #D4537E; background: #FBEAF0; }
+
+    @media (prefers-color-scheme: dark) {
+      .err-1 { background: rgba(216,90,48,.18); }
+      .err-2 { background: rgba(186,117,23,.18); }
+      .err-3 { background: rgba(83,74,183,.18); }
+      .err-4 { background: rgba(29,158,117,.18); }
+      .err-5 { background: rgba(212,83,126,.18); }
+    }
+
+    /* ── Leyenda ── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: .75rem;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .legend-dot {
+      width: 12px;
+      height: 4px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .l1{background:#D85A30} .l2{background:#BA7517}
+    .l3{background:#534AB7} .l4{background:#1D9E75} .l5{background:#D4537E}
+
+    /* ── Lista de errores ── */
+    .errores-list { margin-top: .75rem; }
+    .error-item {
+      display: flex;
+      gap: 10px;
+      padding: 9px 0;
+      border-top: 0.5px solid var(--border);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 12.5px;
+      line-height: 1.55;
+    }
+    .error-num {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      margin-top: 1px;
+    }
+    .en1{background:var(--coral-50);color:var(--coral-800)}
+    .en2{background:var(--amber-50);color:var(--amber-800)}
+    .en3{background:var(--purple-50);color:var(--purple-800)}
+    .en4{background:var(--teal-50);color:var(--teal-800)}
+    .en5{background:var(--pink-50);color:var(--pink-800)}
+
+    .error-label {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+    .error-orig {
+      font-style: italic;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    .error-fix {
+      color: var(--text-secondary);
+      margin-top: 3px;
+    }
+    .arrow { color: var(--text-tertiary); }
+
+    /* ── Nota de uso ── */
+    .nota {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: .75rem 1rem;
+      margin-top: 1rem;
+      line-height: 1.6;
+      border-left: 3px solid var(--border-md);
+    }
+
+    /* ── Separador ── */
+    hr {
+      border: none;
+      border-top: 0.5px solid var(--border);
+      margin: 1.5rem 0;
+    }
+
+    /* ── Cuadrícula comparativa ── */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+      margin-top: 1rem;
+    }
+    .compare-cell {
+      border-radius: var(--radius-md);
+      padding: .85rem 1rem;
+    }
+    .compare-cell .lang {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    .compare-cell .desc {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 11.5px;
+      line-height: 1.55;
+    }
+    .cell-en { background: var(--blue-50); }
+    .cell-en .lang { color: var(--blue-800); }
+    .cell-en .desc { color: var(--text-info); }
+    .cell-fr { background: var(--pink-50); }
+    .cell-fr .lang { color: var(--pink-800); }
+    .cell-fr .desc { color: var(--pink-600); }
+    .cell-de { background: var(--amber-50); }
+    .cell-de .lang { color: var(--amber-800); }
+    .cell-de .desc { color: var(--amber-600); }
+    .cell-ja { background: var(--teal-50); }
+    .cell-ja .lang { color: var(--teal-800); }
+    .cell-ja .desc { color: var(--teal-600); }
+
+    /* ── Observación final ── */
+    .obs {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-top: 1rem;
+    }
+    .obs strong { color: var(--text-primary); font-weight: 500; }
+
+    /* ── Footer ── */
+    .page-footer {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-align: center;
+      margin-top: 2.5rem;
+      padding-top: 1rem;
+      border-top: 0.5px solid var(--border);
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 1rem .75rem; }
+      .card { padding: 1rem; }
+      .text-block { padding: .75rem 1rem; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- CABECERA -->
+  <header class="page-header">
+    <h1>Errores de IA en traducción académica — Ejemplos anotados</h1>
+    <p>El mismo abstract en español traducido por LLM al inglés, francés, alemán y japonés.<br>
+    Errores anotados por categoría. Uso: demostración en charla sobre IA para servicios de traducción y corrección.</p>
+    <div class="meta-row">
+      <span class="badge badge-es">Español → origen</span>
+      <span class="badge badge-en">Inglés</span>
+      <span class="badge badge-fr">Francés</span>
+      <span class="badge badge-de">Alemán</span>
+      <span class="badge badge-ja">Japonés</span>
+    </div>
+  </header>
+
+  <!-- ORIGINAL -->
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-es">Texto original · Español</span>
+      <span style="font-family:system-ui,sans-serif;font-size:12px;color:var(--text-secondary)">Abstract de artículo de ciencias de la educación</span>
+    </div>
+    <div class="text-block">
+      Este estudio examina los efectos de la implementación de metodologías de aprendizaje activo en el rendimiento académico de estudiantes universitarios de primer curso. Mediante un diseño cuasiexperimental con grupo de control, se analizaron los resultados de 240 participantes a lo largo de un semestre. Los hallazgos sugieren que la exposición sostenida a dinámicas participativas mejora significativamente tanto la retención de contenidos como la capacidad de transferencia de conocimiento a nuevos contextos. Se discuten las implicaciones para el diseño curricular y la formación del profesorado universitario.
+    </div>
+  </div>
+
+  <!-- ══════════ INGLÉS ══════════ -->
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-en">Versión inglés · Output de LLM</span>
+      <span class="badge badge-err">5 errores marcados</span>
+      <span class="badge badge-ok">Mayor exposición a automatización</span>
+    </div>
+    <div class="section-label">Texto con errores anotados</div>
+    <div class="text-block">
+      This study examines the effects of the
+      <span class="err err-1">implementation of active learning methodologies</span>
+      on the academic performance of
+      <span class="err err-2">first-year university students</span>.
+      Through a
+      <span class="err err-3">quasi-experimental design with a control group</span>,
+      the results of 240 participants were analyzed over a semester. The findings
+      <span class="err err-4">suggest that sustained exposure to participatory dynamics significantly improves</span>
+      both content retention and the ability to transfer knowledge to new contexts.
+      The implications for
+      <span class="err err-5">curricular design and the training of university teaching staff</span>
+      are discussed.
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot l1"></div>Nominalización excesiva</div>
+      <div class="legend-item"><div class="legend-dot l2"></div>Opción válida pero no óptima</div>
+      <div class="legend-item"><div class="legend-dot l3"></div>Colocación no idiomática</div>
+      <div class="legend-item"><div class="legend-dot l4"></div>Vocabulario LLM</div>
+      <div class="legend-item"><div class="legend-dot l5"></div>Registro inadecuado al dominio</div>
+    </div>
+    <div class="errores-list">
+      <div class="error-item">
+        <div class="error-num en1">1</div>
+        <div>
+          <div class="error-label">Nominalización excesiva heredada del español</div>
+          <div class="error-orig">"the implementation of active learning methodologies"</div>
+          <div class="error-fix"><span class="arrow">→</span> El inglés académico anglosajón prefiere construcciones más directas: <em>the use of active learning approaches</em> o simplemente <em>active learning implementation</em>. La cadena "implementation of … methodologies" calca la nominalización española y suena pesada en un abstract donde la concisión es norma.</div>
+        </div>
+      </div>
+      <div class="error-item">
+        <div class="error-num en2">2</div>
+        <div>
+          <div class="error-label">Opción válida pero que revela falta de criterio disciplinar</div>
+          <div class="error-orig">"first-year university students"</div>
+          <div class="error-fix"><span class="arrow">→</span> En inglés académico angloamericano se prefiere <em>first-year undergraduates</em> o <em>first-year college students</em> (EE.UU.) / <em>first-year undergraduate students</em> (Reino Unido). La elección señala la audiencia y tradición académica. El LLM elige la opción más genérica, no la más precisa para el contexto de publicación.</div>
+        </div>
+      </div>
+      <div class="error-item">
+        <div class="error-num en3">3</div>
+        <div>
+          <div class="error-label">Colocación no idiomática en inglés académico</div>
+          <div class="error-orig">"quasi-experimental design with a control group"</div>
+          <div class="error-fix"><span class="arrow">→</span> La colocación estándar en ciencias sociales y educación es <em>quasi-experimental design including a control group</em> o <em>a quasi-experimental study with matched control and experimental groups</em>. El modificador suelto <em>with a control group</em> suena a traducción; un nativo lo reformularía con más precisión metodológica.</div>
+        </div>
+      </div>
+      <div class="error-item">
+        <div class="error-num en4">4</div>
+        <div>
+          <div class="error-label">Vocabulario LLM: "participatory dynamics"</div>
+          <div class="error-orig">"sustained exposure to participatory dynamics"</div>
+          <div class="error-fix"><span class="arrow">→</span> <em>Participatory dynamics</em> es una frase característica del output de LLM en inglés académico: suena académica, es vaga y no es una colocación establecida en la literatura educativa. Lo idiomático: <em>sustained engagement with active learning strategies</em> o <em>ongoing participation in collaborative activities</em>. Además, <em>sustained exposure to</em> calca "exposición sostenida a" en lugar de reformular con verbo activo.</div>
+        </div>
+      </div>
+      <div class="error-item">
+        <div class="error-num en5">5</div>
+        <div>
+          <div class="error-label">Registro inadecuado al dominio de publicación</div>
+          <div class="error-orig">"the training of university teaching staff"</div>
+          <div class="error-fix"><span class="arrow">→</span> <em>Teaching staff</em> tiene connotaciones administrativas. Lo estándar en este dominio: <em>faculty development</em> (EE.UU.) o <em>academic staff development</em> (Reino Unido). La elección depende de la revista de destino, algo que el LLM no puede determinar sin instrucciones explícitas.</div>
+        </div>
+      </div>
+    </div>
+    <div class="nota">Este es el caso más traicionero para el revisor: el texto pasa todos los filtros automáticos, no tiene errores gramaticales y a un no nativo le parece excelente. Solo un revisor nativo con conocimiento del dominio y de la audiencia de publicación detecta que no suena como escrito originalmente en inglés.</div>
+  </div>
+
+  <!-- ══════════ FRANCÉS ══════════ -->
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-fr">Versión francés · Output de LLM</span>
+      <span class="badge badge-err">5 errores marcados</span>
+    </div>
+    <div class="section-label">Texto con errores anotados</div>
+    <div class="text-block">
+      Cette étude examine les effets de
+      <span class="err err-1">la mise en œuvre de méthodologies d'apprentissage actif</span>
+      sur les résultats académiques
+      <span class="err err-2">des étudiants universitaires de première année</span>.
+      À travers un
+      <span class="err err-3">dispositif quasi-expérimental avec groupe de contrôle</span>,
+      les résultats de 240 participants ont été analysés sur un semestre. Les résultats
+      <span class="err err-4">suggèrent que l'exposition soutenue à des dynamiques participatives améliore significativement</span>
+      tant la rétention des contenus que la capacité de transfert des connaissances vers de nouveaux contextes.
+      <span class="err err-5">Les implications pour la conception curriculaire et la formation des enseignants universitaires</span>
+      sont discutées.
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot l1"></div>Anglicismo léxico</div>
+      <div class="legend-item"><div class="legend-dot l2"></div>Calco estructural del español</div>
+      <div class="legend-item"><div class="legend-dot l3"></div>Colocación no estándar</div>
+      <div class="legend-item"><div class="legend-dot l4"></div>Vocabulario LLM / translationese</div>
+      <div class="legend-item"><div class="legend-dot l5"></div>Terminología disciplinar incorrecta</div>
+    </div>
+    <div class="errores-list">
+      <div class="error-item">
+        <div class="error-num en1">1</div>
+        <div>
+          <div class="error-label">Anglicismo léxico en terminología pedagógica</div>
+          <div class="error-orig">"la mise en œuvre de méthodologies d'apprentissage actif"</div>
+          <div class="error-fix"><span class="arrow">→</span> <em>Méthodologies</em> en plural es un anglicismo frecuente en el output de LLM para el francés. En francés académico de ciencias de la educación se prefiere <em>méthodes pédagogiques actives</em> o <em>démarches d'apprentissage actif</em>. El uso de <em>mise en œuvre</em> también es pesado; <em>l'introduction de</em> o <em>le recours à</em> son más naturales.</div>
+        </div>
+      </div>
+      <div class="error-item">
+        <div class="error-num en2">2</div>
+        <div>
+          <div class="error-label">Calco estructural del español que ignora el sistema francés</div>
+          <div class="error-orig">"des étudiants universitaires de première année"</div>
+          <div class="error-fix"><span class="arrow">→</span> Calca directamente "estudiantes universitarios de primer año". En francés académico lo natural es <em>des étudiants de première année de licence</em> o <em>des primo-entrants à l'université</em>. El sistema francés (L1/L2/L3) tiene su propia terminología que el LLM ignora al calcar la estructura española.</div>
+        </div>
+      </div>
+      <div class="error-item">
+        <div class="error-num en3">3</div>
+        <div>
+          <div class="error-label">Colocación metodológica no estándar en francés académico</div>
+          <div class="error-orig">"dispositif quasi-expérimental avec groupe de contrôle"</div>
+          <div class="error-fix"><span class="arrow">→</span> <em>Dispositif</em> no es el sustantivo habitual aquí; lo correcto es <em>protocole quasi-expérimental</em> o <em>plan quasi-expérimental</em>. Además, <em>groupe de contrôle</em> es válido pero <em>groupe témoin</em> es la colocación estándar en la tradición francesa de psicología y pedagogía experimental.</div>
+        </div>
+      </div>
+      <div class="error-item">
+        <div class="error-num en4">4</div>
+        <div>
+          <div class="error-label">Vocabulario LLM y translationese acumulado</div>
+          <div class="error-orig">"l'exposition soutenue à des dynamiques participatives améliore significativement"</div>
+          <div class="error-fix"><span class="arrow">→</span> Tres marcadores acumulados: (1) <em>exposition soutenue à</em> calca "exposición sostenida a" vía inglés <em>sustained exposure to</em>; (2) <em>dynamiques participatives</em> es un calco de "participatory dynamics", sin tradición en la literatura pedagógica francesa; (3) <em>significativement</em> como adverbio suelto suena más propio del inglés; en francés académico se prefiere <em>de manière significative</em> o se reformula con el verbo.</div>
+        </div>
+      </div>
+      <div class="error-item">
+        <div class="error-num en5">5</div>
+        <div>
+          <div class="error-label">Terminología que no corresponde al sistema institucional francés</div>
+          <div class="error-orig">"la conception curriculaire et la formation des enseignants universitaires"</div>
+          <div class="error-fix"><span class="arrow">→</span> <em>Conception curriculaire</em> es un anglicismo: en francés académico se usa <em>ingénierie pédagogique</em> o <em>élaboration des programmes</em>. Lo preciso para el sistema francés es <em>formation des enseignants-chercheurs</em> o <em>développement professionnel des enseignants du supérieur</em>, que reflejan la estructura del sistema universitario francés.</div>
+        </div>
+      </div>
+    </div>
+    <div class="nota">El francés tiene un problema adicional: la tradición prescriptivista hace que los anglicismos en textos académicos formales sean especialmente visibles para un revisor nativo. Un texto con <em>méthodologies</em>, <em>curriculaire</em> y <em>dynamiques participatives</em> acumulados en un abstract corto señala inmediatamente su origen.</div>
+  </div>
+
+  <!-- ══════════ ALEMÁN ══════════ -->
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-de">Versión alemán · Output de LLM</span>
+      <span class="badge badge-err">5 errores marcados</span>
+    </div>
+    <div class="section-label">Texto con errores anotados</div>
+    <div class="text-block">
+      Diese Studie
+      <span class="err err-1">untersucht die Auswirkungen der Implementierung</span>
+      von Methoden des aktiven Lernens auf die akademische Leistung von
+      <span class="err err-2">Universitätsstudenten des ersten Kurses</span>.
+      Durch ein
+      <span class="err err-3">quasi-experimentelles Design mit Kontrollgruppe</span>
+      wurden die Ergebnisse von 240 Teilnehmern über ein Semester analysiert. Die Ergebnisse
+      <span class="err err-4">deuten darauf hin, dass die nachhaltige Exposition gegenüber partizipativen Dynamiken</span>
+      sowohl die Inhaltsretention als auch die Fähigkeit zur Wissensübertragung auf neue Kontexte signifikant verbessert. Die Implikationen für
+      <span class="err err-5">das curriculare Design und die Ausbildung des universitären Lehrpersonals</span>
+      werden diskutiert.
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot l1"></div>Calco léxico del español</div>
+      <div class="legend-item"><div class="legend-dot l2"></div>Compuesto incorrecto</div>
+      <div class="legend-item"><div class="legend-dot l3"></div>Grafía no estándar</div>
+      <div class="legend-item"><div class="legend-dot l4"></div>Translationese sintáctico</div>
+      <div class="legend-item"><div class="legend-dot l5"></div>Registro inadecuado</div>
+    </div>
+    <div class="errores-list">
+      <div class="error-item">
+        <div class="error-num en1">1</div>
+        <div>
+          <div class="error-label">Calco léxico del español</div>
+          <div class="error-orig">"die Auswirkungen der Implementierung" → calca "los efectos de la implementación"</div>
+          <div class="error-fix"><span class="arrow">→</span> En alemán académico: <em>die Auswirkungen des Einsatzes</em> o directamente <em>Auswirkungen aktiver Lernmethoden</em>. <em>Implementierung</em> existe en alemán técnico pero resulta pesado y anglosajón en un contexto pedagógico.</div>
+        </div>
+      </div>
+      <div class="error-item">
+        <div class="error-num en2">2</div>
+        <div>
+          <div class="error-label">Término que calca la estructura del sistema educativo español</div>
+          <div class="error-orig">"Universitätsstudenten des ersten Kurses" → calca "estudiantes universitarios de primer curso"</div>
+          <div class="error-fix"><span class="arrow">→</span> El alemán no organiza los estudios por "cursos" de la misma forma. Lo natural: <em>Studierenden im ersten Studienjahr</em> o <em>Erstsemesterstudierende</em>. El uso de <em>Kurs</em> delata la estructura del español subyacente.</div>
+        </div>
+      </div>
+      <div class="error-item">
+        <div class="error-num en3">3</div>
+        <div>
+          <div class="error-label">Grafía con guion: no es estándar en alemán académico</div>
+          <div class="error-orig">"quasi-experimentelles Design" (con guion)</div>
+          <div class="error-fix"><span class="arrow">→</span> En alemán se escribe junto: <em>quasiexperimentelles Design</em>. El guion revela que el modelo ha calcado la convención del inglés (<em>quasi-experimental</em>) o del español, no la del alemán.</div>
+        </div>
+      </div>
+      <div class="error-item">
+        <div class="error-num en4">4</div>
+        <div>
+          <div class="error-label">Translationese sintáctico: literalismo que suena artificial</div>
+          <div class="error-orig">"die nachhaltige Exposition gegenüber partizipativen Dynamiken"</div>
+          <div class="error-fix"><span class="arrow">→</span> <em>Exposition gegenüber</em> es un calco del inglés <em>exposure to</em> vía español. En alemán pedagógico: <em>die kontinuierliche Anwendung partizipativer Methoden</em> o <em>anhaltende Beteiligung an partizipativen Lernformen</em>. El texto es gramaticalmente válido pero suena a traducción.</div>
+        </div>
+      </div>
+      <div class="error-item">
+        <div class="error-num en5">5</div>
+        <div>
+          <div class="error-label">Registro y terminología inadecuados para el dominio</div>
+          <div class="error-orig">"das curriculare Design und die Ausbildung des universitären Lehrpersonals"</div>
+          <div class="error-fix"><span class="arrow">→</span> <em>Curriculares Design</em> es anglicismo innecesario; en alemán académico de pedagogía: <em>Lehrplangestaltung</em> o <em>Curriculumentwicklung</em>. <em>Lehrpersonal</em> tiene connotaciones administrativas; lo estándar es <em>Hochschullehrende</em> o <em>Lehrende an Hochschulen</em>.</div>
+        </div>
+      </div>
+    </div>
+    <div class="nota">Ninguno de estos errores hace el texto incomprensible. Todos pasan un corrector gramatical. Son exactamente el tipo de error que solo detecta alguien con competencia nativa y conocimiento del registro académico alemán en ese dominio.</div>
+  </div>
+
+  <!-- ══════════ JAPONÉS ══════════ -->
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-ja">Versión japonés · Output de LLM</span>
+      <span class="badge badge-err">5 errores marcados</span>
+    </div>
+    <div class="section-label">Texto con errores anotados</div>
+    <div class="text-block">
+      本研究は、<span class="err err-1">アクティブラーニング手法の実施</span>が大学<span class="err err-2">一年生</span>の学業成績に与える影響を検討する。<span class="err err-3">対照群を用いた準実験的デザイン</span>により、240名の参加者の結果を1学期にわたって分析した。<span class="err err-4">研究結果は、参加型ダイナミクスへの持続的な露出が</span>内容の定着と新しい文脈への知識移転の能力の両方を有意に向上させることを示唆している。カリキュラム設計と<span class="err err-5">大学教員養成への示唆</span>について論じる。
+    </div>
+    <div class="section-label" style="margin-top:.75rem">Transliteración (rōmaji)</div>
+    <div class="text-block mono" style="font-style:italic;color:var(--text-secondary)">
+      Hon kenkyū wa, [akutibu rāningu shuhō no jisshi] ga daigaku [ichinensei] no gakugyō seiseki ni ataeru eikyō wo kentō suru. [Taishōgun wo mochiita jun-jikkenteki dezain] ni yori, 240-mei no sankasha no kekka wo 1-gakki ni watatte bunseki shita. [Kenkyū kekka wa, sankagata dainamikusu e no jizoku-teki na roshutsu ga] naiyō no chakko to atarashii bunmyaku e no chishiki iten no nōryoku no ryōhō wo yūi ni kōjō saseru koto wo shisa shite iru. Karikyuramu sekkei to [daigaku kyōin yōsei e no shisa] ni tsuite ronjiru.
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot l1"></div>Katakana inapropiado</div>
+      <div class="legend-item"><div class="legend-dot l2"></div>Término incorrecto por nivel educativo</div>
+      <div class="legend-item"><div class="legend-dot l3"></div>Convención no académica</div>
+      <div class="legend-item"><div class="legend-dot l4"></div>Calco estructural con connotación errónea</div>
+      <div class="legend-item"><div class="legend-dot l5"></div>Keigo y registro insuficiente</div>
+    </div>
+    <div class="errores-list">
+      <div class="error-item">
+        <div class="error-num en1">1</div>
+        <div>
+          <div class="error-label">Uso de katakana donde se esperan kanji consolidados</div>
+          <div class="error-orig">アクティブラーニング (akutibu rāningu) para "aprendizaje activo"</div>
+          <div class="error-fix"><span class="arrow">→</span> En japonés académico de pedagogía el término consolidado es 能動的学習 (<em>nōdō-teki gakushū</em>) o アクティブ・ラーニング con punto medio. El préstamo puro en katakana sin punto medio es coloquial y señala que el modelo optó por la solución estadísticamente más frecuente, no la disciplinarmente correcta.</div>
+        </div>
+      </div>
+      <div class="error-item">
+        <div class="error-num en2">2</div>
+        <div>
+          <div class="error-label">Término que no corresponde al nivel universitario japonés</div>
+          <div class="error-orig">一年生 (ichinensei) para "estudiantes de primer curso"</div>
+          <div class="error-fix"><span class="arrow">→</span> 一年生 es el término para alumnos de primaria o secundaria. En contexto universitario lo correcto es 1年次生 (1-nenjisei) o 学部1年生 (gakubu 1-nensei). El error revela que el modelo no distingue el registro educativo por nivel.</div>
+        </div>
+      </div>
+      <div class="error-item">
+        <div class="error-num en3">3</div>
+        <div>
+          <div class="error-label">Estructura y terminología no convencionales en japonés académico</div>
+          <div class="error-orig">対照群を用いた準実験的デザイン (taishōgun wo mochiita jun-jikkenteki dezain)</div>
+          <div class="error-fix"><span class="arrow">→</span> デザイン (dezain) como anglicismo para "diseño metodológico" es informal en escritura académica japonesa. Lo estándar: 準実験的研究手法 (<em>jun-jikkenteki kenkyū shuhō</em>) o 準実験計画 (<em>jun-jikken keikaku</em>). Además, el orden de elementos calca el español en lugar de seguir la estructura japonesa habitual.</div>
+        </div>
+      </div>
+      <div class="error-item">
+        <div class="error-num en4">4</div>
+        <div>
+          <div class="error-label">Calco con connotación no deseada en japonés</div>
+          <div class="error-orig">参加型ダイナミクスへの持続的な露出が (sankagata dainamikusu e no jizoku-teki na roshutsu ga)</div>
+          <div class="error-fix"><span class="arrow">→</span> Tres problemas acumulados: (1) ダイナミクス (dainamikusu) no tiene uso consolidado en pedagogía japonesa; (2) 露出 (roshutsu) tiene connotaciones negativas en japonés (exposición a elementos peligrosos, o exhibicionismo); (3) la estructura entera calca el español en lugar de reformular con un verbo natural: 参加型学習を継続的に取り入れることで (<em>sankagata gakushū wo keizoku-teki ni toriireru koto de</em>).</div>
+        </div>
+      </div>
+      <div class="error-item">
+        <div class="error-num en5">5</div>
+        <div>
+          <div class="error-label">Keigo insuficiente y registro bajo para texto académico formal</div>
+          <div class="error-orig">大学教員養成への示唆について論じる (daigaku kyōin yōsei e no shisa ni tsuite ronjiru)</div>
+          <div class="error-fix"><span class="arrow">→</span> El verbo 論じる (ronjiru) en forma de diccionario al final de un abstract académico formal es demasiado directo. Lo convencional en japonés académico: 論じることとする, la forma pasiva 論じられる, o reformular con 検討する (kentō suru). Además, 示唆 (shisa) tiene un matiz de incertidumbre que queda débil; 知見 (chiken) sería más apropiado.</div>
+        </div>
+      </div>
+    </div>
+    <div class="nota">El japonés es el caso más delicado: ninguno de estos errores produce texto incomprensible, y un lector no especializado ni los notaría. Un revisor nativo de japonés académico los identifica en la primera lectura. Un detector de IA entrenado en inglés no detectaría ninguno.</div>
+  </div>
+
+  <!-- ══════════ COMPARATIVA ══════════ -->
+  <div class="card">
+    <div class="card-header">
+      <span style="font-family:system-ui,sans-serif;font-size:14px;font-weight:500;color:var(--text-primary)">Patrón comparativo entre las cuatro lenguas</span>
+    </div>
+    <div style="font-family:system-ui,sans-serif;font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:1rem">
+      El mismo abstract, cuatro perfiles de error distintos. Lo que tienen en común: todos pasan una revisión automática. Todos requieren un revisor nativo con competencia disciplinar.
+    </div>
+    <div class="compare-grid">
+      <div class="compare-cell cell-en">
+        <div class="lang">Inglés</div>
+        <div class="desc">Error más traicionero: texto que parece perfecto pero no suena como escrito por un nativo del dominio. Vocabulario LLM indetectable sin competencia disciplinar.</div>
+      </div>
+      <div class="compare-cell cell-fr">
+        <div class="lang">Francés</div>
+        <div class="desc">Anglicismos léxicos acumulados y terminología que ignora el sistema institucional francés. Más visible para un nativo que en inglés.</div>
+      </div>
+      <div class="compare-cell cell-de">
+        <div class="lang">Alemán</div>
+        <div class="desc">Errores morfológicos y de composición nominal. Translationese sintáctico. Más detectable por corrector automático que inglés o francés.</div>
+      </div>
+      <div class="compare-cell cell-ja">
+        <div class="lang">Japonés</div>
+        <div class="desc">Errores de registro, keigo y connotación. Completamente invisibles para detectores de IA. Requieren el mayor nivel de competencia nativa especializada.</div>
+      </div>
+    </div>
+    <div class="obs">
+      <strong>Una observación para la charla:</strong> El calco de "exposición sostenida a dinámicas participativas" aparece en las cuatro versiones: en inglés como <em>sustained exposure to participatory dynamics</em>, en francés como <em>l'exposition soutenue à des dynamiques participatives</em>, en alemán como <em>die nachhaltige Exposition gegenüber partizipativen Dynamiken</em>, en japonés como <em>sankagata dainamikusu e no jizoku-teki na roshutsu</em>. El modelo no traduce: propaga el calco a través de las lenguas, porque aprendió esa correspondencia de los corpus paralelos sin entender que ninguna de esas traducciones es idiomática en su contexto académico.
+    </div>
+    <div class="obs" style="margin-top:.75rem">
+      <strong>La paradoja del inglés:</strong> El inglés es la lengua donde la IA funciona mejor y donde los errores son más difíciles de detectar. La fluidez es tan alta que identificar lo que "no suena bien" requiere un nivel de competencia nativa muy fino y conocimiento del dominio específico. Eso convierte al inglés en el caso de mayor riesgo real para un servicio de revisión.
+    </div>
+  </div>
+
+  <footer class="page-footer">
+    Documento preparado como material de apoyo para charla sobre IA en traducción y corrección académica · Ejemplos sintéticos con fines demostrativos
+  </footer>
+
+</div>
+</body>
+</html>
